@@ -14,7 +14,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: PiliPlus-COUIX-arm64-v8a.apk
-          run-id: 45854948684
+          run-id: 45912580585
           github-token: ${{ github.token }}
       - name: Prepare capture script
         run: |
@@ -81,7 +81,13 @@ jobs:
           rec=Popen(['adb','shell','screenrecord','--size','720x1600','--time-limit','12','/sdcard/couix-motion.mp4'])
           time.sleep(1)
           scroll_pair()
-          for label in ['动态','我的','首页']:
+          x,y=positions['首页']
+          target_x,target_y=positions['我的']
+          adb('shell','input','swipe',x,y,target_x,target_y,'520')
+          time.sleep(1)
+          button('我的',check=True)
+          capture('mine-dark')
+          for label in ['动态','首页']:
               tap(label)
               button(label,check=True)
           if rec.wait(timeout=20): raise RuntimeError('screenrecord failed')
