@@ -57,8 +57,6 @@ class MainController extends GetxController
   late final RxnString msgUnReadCount = RxnString(null);
   late int lastCheckUnreadAt = 0;
 
-  final enableMYBar = Pref.enableMYBar;
-  final floatingNavBar = Pref.floatingNavBar;
   final useSideBar = Pref.useSideBar;
   final hideSideBarLabel = Pref.hideSideBarLabel;
   final mainTabBarView = Pref.mainTabBarView;

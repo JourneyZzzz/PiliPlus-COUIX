@@ -161,17 +161,15 @@ class _MediaPageState extends CommonPageState<MinePage>
         spacing: 5,
         mainAxisSize: .min,
         children: [
-          if (!_mainController.hasHome) ...[
-            IconButton(
-              iconSize: iconSize,
-              padding: padding,
-              style: style,
-              tooltip: '搜索',
-              onPressed: () => Get.toNamed('/search'),
-              icon: const Icon(Icons.search),
-            ),
-            msgBadge(_mainController),
-          ],
+          IconButton(
+            iconSize: iconSize,
+            padding: padding,
+            style: style,
+            tooltip: '搜索',
+            onPressed: () => Get.toNamed('/search'),
+            icon: const Icon(Icons.search),
+          ),
+          msgBadge(_mainController),
           if (GStorage.reply != null)
             IconButton(
               iconSize: iconSize,

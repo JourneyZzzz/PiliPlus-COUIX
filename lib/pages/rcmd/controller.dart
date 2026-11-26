@@ -47,6 +47,7 @@ class RcmdController extends CommonListController with RefreshImplMixin {
 
   @override
   void handleListResponse(List dataList) {
+    if (page == 0) lastRefreshAt = null;
     if (enableSaveLastData && page == 0) {
       if (loadingState.value case Success(:final response)) {
         if (response != null && response.isNotEmpty) {

@@ -10,6 +10,7 @@ import 'package:PiliPlus/pages/rcmd/controller.dart';
 import 'package:PiliPlus/utils/grid.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -89,68 +90,64 @@ class _RcmdPageState extends State<RcmdPage>
       Loading() => _buildSkeleton,
       Success(:final response) =>
         response != null && response.isNotEmpty
-            ? SliverGrid.builder(
-                gridDelegate: gridDelegate,
-                itemBuilder: (context, index) {
-                  if (index == response.length - 1) {
-                    controller.onLoadMore();
-                  }
-                  if (controller.lastRefreshAt != null) {
-                    if (controller.lastRefreshAt == index) {
-                      return GestureDetector(
-                        onTap: () => controller
-                          ..animateToTop()
-                          ..onRefresh(),
-                        child: Card(
-                          child: Container(
-                            alignment: Alignment.center,
-                            padding: const .symmetric(horizontal: 10),
-                            child: Text(
-                              '上次看到这里\n点击刷新',
-                              textAlign: .center,
-                              style: TextStyle(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                    final actualIndex = index > controller.lastRefreshAt!
-                        ? index - 1
-                        : index;
-                    return VideoCardV(
-                      videoItem: response[actualIndex],
-                      onRemove: () {
-                        if (controller.lastRefreshAt != null &&
-                            actualIndex < controller.lastRefreshAt!) {
-                          controller.lastRefreshAt =
-                              controller.lastRefreshAt! - 1;
-                        }
-                        controller.loadingState
-                          ..value.data!.removeAt(actualIndex)
-                          ..refresh();
-                      },
-                    );
-                  } else {
-                    return VideoCardV(
-                      videoItem: response[index],
-                      onRemove: () => controller.loadingState
-                        ..value.data!.removeAt(index)
-                        ..refresh(),
-                    );
-                  }
-                },
-                itemCount: controller.lastRefreshAt != null
-                    ? response.length + 1
-                    : response.length,
-              )
+            ? _recommendations(response, colorScheme)
             : HttpError(onReload: controller.onReload),
       Error(:final errMsg) => HttpError(
         errMsg: errMsg,
         onReload: controller.onReload,
       ),
     };
+  }
+
+  Widget _recommendations(List<dynamic> items, ColorScheme colors) {
+    final marker = controller.lastRefreshAt;
+    final count = items.length + (marker == null ? 0 : 1);
+    return SliverMasonryGrid.extent(
+      maxCrossAxisExtent: Pref.recommendCardWidth,
+      crossAxisSpacing: Style.cardSpace,
+      mainAxisSpacing: Style.cardSpace,
+      childCount: count,
+      itemBuilder: (context, index) {
+        if (index == count - 1) controller.onLoadMore();
+        if (index == marker) {
+          return Card(
+            child: InkWell(
+              onTap: () => controller
+                ..animateToTop()
+                ..onRefresh(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 20,
+                ),
+                child: Text(
+                  '上次看到这里\n点击刷新',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: colors.onSurfaceVariant),
+                ),
+              ),
+            ),
+          );
+        }
+        final item =
+            items[marker != null && index > marker ? index - 1 : index];
+        return VideoCardV(
+          videoItem: item,
+          onRemove: () {
+            final current = controller.loadingState.value.dataOrNull;
+            if (current == null) return;
+            final i = current.indexOf(item);
+            if (i < 0) return;
+            final boundary = controller.lastRefreshAt;
+            if (boundary != null && i < boundary) {
+              controller.lastRefreshAt = boundary - 1;
+            }
+            current.removeAt(i);
+            controller.loadingState.refresh();
+          },
+        );
+      },
+    );
   }
 
   Widget get _buildSkeleton => SliverGrid(

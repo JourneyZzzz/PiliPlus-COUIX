@@ -39,14 +39,14 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
           style: ButtonStyle(
             padding: const WidgetStatePropertyAll(EdgeInsets.zero),
             backgroundColor: WidgetStatePropertyAll(
-              colorScheme.secondaryContainer,
+              colorScheme.surfaceContainerHigh,
             ),
           ),
           onPressed: () => CreateDynPanel.onCreateDyn(context),
           icon: Icon(
             Icons.add,
             size: 18,
-            color: colorScheme.onSecondaryContainer,
+            color: colorScheme.onSurface,
           ),
         ),
       );
@@ -183,7 +183,7 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
                 labelColor: colorScheme.primary,
                 indicatorColor: colorScheme.primary,
                 controller: _dynamicsController.tabController,
-                unselectedLabelColor: colorScheme.onSurface,
+                unselectedLabelColor: colorScheme.onSurfaceVariant,
                 labelStyle:
                     TabBarTheme.of(context).labelStyle
                         ?.copyWith(fontSize: 13) ??

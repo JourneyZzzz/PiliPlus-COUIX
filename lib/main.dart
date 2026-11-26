@@ -8,7 +8,6 @@ import 'package:PiliPlus/common/widgets/route_aware_mixin.dart';
 import 'package:PiliPlus/common/widgets/scale_app.dart';
 import 'package:PiliPlus/common/widgets/scroll_behavior.dart';
 import 'package:PiliPlus/http/init.dart';
-import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/router/app_pages.dart';
 import 'package:PiliPlus/services/account_service.dart';
@@ -19,8 +18,6 @@ import 'package:PiliPlus/utils/cache_manager.dart';
 import 'package:PiliPlus/utils/date_utils.dart';
 import 'package:PiliPlus/utils/desktop/calc_window_position.dart';
 import 'package:PiliPlus/utils/device_utils.dart';
-import 'package:PiliPlus/utils/extension/core_palettes_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/font_utils.dart';
 import 'package:PiliPlus/utils/ios/pip_helper.dart';
 import 'package:PiliPlus/utils/json_file_handler.dart';
@@ -35,7 +32,6 @@ import 'package:PiliPlus/utils/theme_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:catcher_2/catcher_2.dart';
 import 'package:collection/collection.dart';
-import 'package:dynamic_color/dynamic_color.dart' show DynamicColorPlugin;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -169,9 +165,6 @@ void main() async {
     }
   }
 
-  if (Pref.dynamicColor) {
-    await MyApp.initPlatformState();
-  }
 
   if (Pref.enableLog) {
     // 异常捕获 logo记录
@@ -257,35 +250,39 @@ void _onBack() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static ColorScheme? _light, _dark;
-
   static (ThemeData, ThemeData) getAllTheme() {
-    final dynamicColor = _light != null && _dark != null && Pref.dynamicColor;
-
-    final ColorScheme lightScheme, darkScheme;
-    if (dynamicColor) {
-      lightScheme = _light!;
-      darkScheme = _dark!;
-    } else {
-      final customColor = Pref.customColor;
-      final brandColor =
-          colorThemeTypes.elementAtOrNull(customColor)?.color ??
-          Color(customColor);
-      final variant = Pref.schemeVariant;
-
-      lightScheme = brandColor.asColorSchemeSeed(variant, .light);
-      darkScheme = brandColor.asColorSchemeSeed(variant, .dark);
+    ColorScheme scheme(Brightness brightness) {
+      final dark = brightness == Brightness.dark;
+      final ink = dark ? const Color(0xFFF5F5F5) : const Color(0xFF191919);
+      final paper = dark ? const Color(0xFF121212) : Colors.white;
+      return ColorScheme.fromSeed(
+        seedColor: const Color(0xFF252525),
+        dynamicSchemeVariant: DynamicSchemeVariant.monochrome,
+        brightness: brightness,
+      ).copyWith(
+        primary: ink,
+        onPrimary: paper,
+        surface: paper,
+        onSurface: ink,
+        onSurfaceVariant: dark ? const Color(0xFFB5B5B5) : const Color(0xFF626262),
+        surfaceContainerLowest: dark ? Colors.black : Colors.white,
+        surfaceContainerLow: dark ? const Color(0xFF1C1C1C) : const Color(0xFFF5F5F5),
+        surfaceContainer: dark ? const Color(0xFF242424) : Colors.white,
+        surfaceContainerHigh: dark ? const Color(0xFF303030) : const Color(0xFFECECEC),
+        surfaceContainerHighest: dark ? const Color(0xFF393939) : const Color(0xFFE4E4E4),
+        surfaceTint: Colors.transparent,
+      );
     }
+    final lightScheme = scheme(Brightness.light);
+    final darkScheme = scheme(Brightness.dark);
 
     return (
       ThemeUtils.lightTheme = ThemeUtils.getThemeData(
         colorScheme: lightScheme,
-        isDynamic: dynamicColor,
       ),
       ThemeUtils.darkTheme = ThemeUtils.getThemeData(
         isDark: true,
         colorScheme: darkScheme,
-        isDynamic: dynamicColor,
       ),
     );
   }
@@ -294,7 +291,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final (light, dark) = getAllTheme();
     return GetMaterialApp(
-      title: Constants.appName,
+      title: 'PiliPlus COUIX',
       theme: light,
       darkTheme: dark,
       themeMode: ThemeUtils.themeMode = Pref.themeMode,
@@ -358,53 +355,6 @@ class MyApp extends StatelessWidget {
     return child;
   }
 
-  /// from [DynamicColorBuilderState.initPlatformState]
-  static Future<bool> initPlatformState() async {
-    if (_light != null || _dark != null) return true;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    try {
-      final colors = await DynamicColorPlugin.channel.invokeMethod(
-        DynamicColorPlugin.methodName,
-      );
-
-      if (colors != null) {
-        final corePalettes = CorePalettesExt.fromList(colors.toList());
-        if (kDebugMode) {
-          debugPrint('dynamic_color: Core palette detected.');
-        }
-        _light = corePalettes.toColorScheme();
-        _dark = corePalettes.toColorScheme(brightness: Brightness.dark);
-        return true;
-      }
-    } on PlatformException {
-      if (kDebugMode) {
-        debugPrint('dynamic_color: Failed to obtain core palette.');
-      }
-    }
-
-    try {
-      final Color? accentColor = await DynamicColorPlugin.getAccentColor();
-
-      if (accentColor != null) {
-        if (kDebugMode) {
-          debugPrint('dynamic_color: Accent color detected.');
-        }
-        final variant = Pref.schemeVariant;
-        _light = accentColor.asColorSchemeSeed(variant, .light);
-        _dark = accentColor.asColorSchemeSeed(variant, .dark);
-        return true;
-      }
-    } on PlatformException {
-      if (kDebugMode) {
-        debugPrint('dynamic_color: Failed to obtain accent color.');
-      }
-    }
-    if (kDebugMode) {
-      debugPrint('dynamic_color: Dynamic color not detected on this device.');
-    }
-    GStorage.setting.put(SettingBoxKey.dynamicColor, false);
-    return false;
-  }
 }
 
 class _CustomHttpOverrides extends HttpOverrides {

@@ -96,10 +96,16 @@ class _HomePageState extends CommonPageState<HomePage>
     final child = Row(
       children: [
         searchBar(),
-        const SizedBox(width: 4),
-        msgBadge(_mainController),
-        const SizedBox(width: 8),
-        userAvatar(colorScheme: _colorScheme, mainController: _mainController),
+        const SizedBox(width: 6),
+        msgBadge(_mainController, toolbarColor: _colorScheme.surfaceContainerLow),
+        Obx(() => IconButton(
+          tooltip: '我的',
+          onPressed: _mainController.toMinePage,
+          style: _toolbarStyle(_colorScheme.surfaceContainerLow),
+          icon: Icon(_mainController.accountService.isLogin.value && MineController.anonymity.value
+              ? MdiIcons.incognito
+              : Icons.person_outline_rounded),
+        )),
       ],
     );
     if (_homeController.hideTopBar) {
@@ -149,7 +155,7 @@ class _HomePageState extends CommonPageState<HomePage>
         height: 44,
         child: Material(
           borderRadius: borderRadius,
-          color: _colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
+          color: _colorScheme.surfaceContainerHigh,
           child: InkWell(
             borderRadius: borderRadius,
             splashColor: _colorScheme.primaryContainer.withValues(
@@ -267,32 +273,40 @@ Widget userAvatar({
   );
 }
 
-Widget msgBadge(MainController mainController) {
-  return Obx(
-    () {
-      if (mainController.accountService.isLogin.value) {
-        final count = mainController.msgUnReadCount.value;
-        final isNumBadge = mainController.msgBadgeMode == .number;
-        return IconButton(
-          tooltip: '消息',
-          onPressed: () {
-            mainController
-              ..clearUnreadMsg()
-              ..lastCheckUnreadAt = DateTime.now().millisecondsSinceEpoch;
-            Get.toNamed('/whisper');
-          },
-          icon: Badge(
-            isLabelVisible:
-                mainController.msgBadgeMode != .hidden && count != null,
-            alignment: isNumBadge
-                ? const Alignment(0.0, -0.85)
-                : const Alignment(1.0, -0.85),
-            label: isNumBadge && count != null ? Text(count) : null,
-            child: const Icon(Icons.notifications_none),
-          ),
-        );
-      }
-      return const SizedBox.shrink();
-    },
-  );
+ButtonStyle _toolbarStyle(Color surface) => IconButton.styleFrom(
+  backgroundColor: surface,
+  fixedSize: const Size.square(40),
+  iconSize: 22,
+  padding: EdgeInsets.zero,
+  shape: const CircleBorder(),
+);
+
+Widget msgBadge(MainController mainController, {Color? toolbarColor}) {
+  return Obx(() {
+    final loggedIn = mainController.accountService.isLogin.value;
+    final count = mainController.msgUnReadCount.value;
+    final isNumBadge = mainController.msgBadgeMode == .number;
+    return IconButton(
+      tooltip: '消息',
+      style: toolbarColor == null ? null : _toolbarStyle(toolbarColor),
+      onPressed: () {
+        if (!loggedIn) {
+          Get.toNamed('/loginPage');
+          return;
+        }
+        mainController
+          ..clearUnreadMsg()
+          ..lastCheckUnreadAt = DateTime.now().millisecondsSinceEpoch;
+        Get.toNamed('/whisper');
+      },
+      icon: Badge(
+        isLabelVisible: loggedIn && mainController.msgBadgeMode != .hidden && count != null,
+        alignment: isNumBadge
+            ? const Alignment(0.0, -0.85)
+            : const Alignment(1.0, -0.85),
+        label: isNumBadge && count != null ? Text(count) : null,
+        child: const Icon(Icons.chat_bubble_outline_rounded),
+      ),
+    );
+  });
 }

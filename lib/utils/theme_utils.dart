@@ -29,7 +29,6 @@ abstract final class ThemeUtils {
 
   static ThemeData getThemeData({
     required ColorScheme colorScheme,
-    required bool isDynamic,
     bool isDark = false,
   }) {
     final fontWeight = Pref.appFontWeight;
@@ -165,9 +164,6 @@ abstract final class ThemeUtils {
         },
       ),
     );
-    if (isDark && Pref.isPureBlackTheme) {
-      return darkenTheme(theme);
-    }
     return theme;
   }
 

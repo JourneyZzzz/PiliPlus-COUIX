@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:PiliPlus/common/widgets/color_palette.dart';
 import 'package:PiliPlus/common/widgets/custom_toast.dart';
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/emote_tooltip.dart'
@@ -20,7 +19,6 @@ import 'package:PiliPlus/models/common/member/tab_type.dart';
 import 'package:PiliPlus/models/common/mine_tab_type.dart';
 import 'package:PiliPlus/models/common/msg/msg_unread_type.dart';
 import 'package:PiliPlus/models/common/nav_bar_config.dart';
-import 'package:PiliPlus/models/common/theme/theme_color_type.dart';
 import 'package:PiliPlus/models/common/theme/theme_type.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/pages/mine/controller.dart';
@@ -35,7 +33,6 @@ import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/utils/extension/file_ext.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/extension/num_ext.dart';
-import 'package:PiliPlus/utils/extension/theme_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/path_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
@@ -130,21 +127,6 @@ List<SettingsModel> get styleSettings => [
     leading: Icon(Icons.auto_fix_high),
     setKey: SettingBoxKey.optTabletNav,
     defaultVal: true,
-    needReboot: true,
-  ),
-  const SwitchModel(
-    title: 'MD3样式底栏',
-    subtitle: 'Material You设计规范底栏，关闭可变窄',
-    leading: Icon(Icons.design_services_outlined),
-    setKey: SettingBoxKey.enableMYBar,
-    defaultVal: true,
-    needReboot: true,
-  ),
-  const SwitchModel(
-    title: '悬浮底栏',
-    leading: Icon(MdiIcons.soundbar),
-    setKey: SettingBoxKey.floatingNavBar,
-    defaultVal: false,
     needReboot: true,
   ),
   SwitchModel(
@@ -350,24 +332,6 @@ List<SettingsModel> get styleSettings => [
     value: () => Pref.themeType,
     items: ThemeType.values,
     onSelected: _setThemeType,
-  ),
-  SwitchModel(
-    leading: const Icon(Icons.invert_colors),
-    title: '纯黑主题',
-    setKey: SettingBoxKey.isPureBlackTheme,
-    defaultVal: false,
-    onChanged: (value) {
-      if (ThemeUtils.isDarkMode || Pref.darkVideoPage) {
-        Get.updateMyAppTheme();
-      }
-    },
-  ),
-  NormalModel(
-    onTap: (context, setState) => Get.toNamed('/colorSetting'),
-    leading: const Icon(Icons.color_lens_outlined),
-    title: '应用主题',
-    getSubtitle: () => '当前主题：${Pref.dynamicColor ? '动态取色' : '指定颜色'}',
-    getTrailing: _themeTrailing,
   ),
   NormalModel(
     onTap: _showMineTabsDialog,
@@ -887,26 +851,6 @@ NormalModel _useSSDModel() {
               onChanged(context, (context as Element).markNeedsBuild),
         ),
       ),
-    ),
-  );
-}
-
-Widget _themeTrailing(ThemeData theme) {
-  if (Pref.dynamicColor) {
-    return Icon(Icons.color_lens_rounded, color: theme.colorScheme.primary);
-  }
-  final customColor = Pref.customColor;
-  final color =
-      colorThemeTypes.elementAtOrNull(customColor)?.color ?? Color(customColor);
-  return SizedBox.square(
-    dimension: 20,
-    child: ColorPalette(
-      colorScheme: color.asColorSchemeSeed(
-        Pref.schemeVariant,
-        theme.brightness,
-      ),
-      selected: false,
-      showBgColor: false,
     ),
   );
 }
