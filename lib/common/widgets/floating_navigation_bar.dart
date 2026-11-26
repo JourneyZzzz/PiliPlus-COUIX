@@ -1,5 +1,4 @@
-import 'dart:ui' show ImageFilter;
-
+import 'package:PiliPlus/common/widgets/liquid_glass.dart';
 import 'package:material_ui/material_ui.dart';
 
 class FloatingNavigationDestination {
@@ -64,54 +63,50 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
             BoxShadow(color: Colors.black.withValues(alpha: dark ? .28 : .12),
               blurRadius: 14, spreadRadius: -3, offset: const Offset(0, 3)),
           ]),
-          child: ClipRRect(
-            borderRadius: radius,
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 17, sigmaY: 17),
-              child: Material(
-                color: (dark ? scheme.surfaceContainer : scheme.surface)
-                    .withValues(alpha: dark ? .62 : .56),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  child: LayoutBuilder(builder: (context, bounds) {
-                    if (bounds.maxWidth <= 0) return const SizedBox.shrink();
-                    final cell = bounds.maxWidth / count;
-                    double position(double x) {
-                      final local = rtl ? bounds.maxWidth - x : x;
-                      return (local / cell - .5).clamp(0.0, count - 1.0).toDouble();
-                    }
-                    final index = (_drag ?? widget.selectedIndex.toDouble())
-                        .clamp(0.0, count - 1.0).toDouble();
-                    final active = index.round();
-                    return GestureDetector(
-                      excludeFromSemantics: true,
-                      onHorizontalDragStart: (d) => setState(() {
-                        _drag = position(d.localPosition.dx);
-                        _pressed = null;
-                      }),
-                      onHorizontalDragUpdate: (d) => setState(() {
-                        _drag = position(d.localPosition.dx);
-                      }),
-                      onHorizontalDragCancel: _clearTouch,
-                      onHorizontalDragEnd: (_) {
-                        final target = _drag?.round();
-                        _clearTouch();
-                        if (target != null && target != widget.selectedIndex) {
-                          widget.onDestinationSelected(target);
-                        }
-                      },
-                      child: Stack(fit: StackFit.expand, children: [
-                        _FluidIndicator(index: index, cell: cell, count: count,
-                          dragging: _drag != null, pressed: _pressed == active,
-                          reduced: reduced),
-                        Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                          for (int i = 0; i < count; i++)
-                            Expanded(child: _destination(context, i, i == active)),
-                        ]),
+          child: LiquidGlass(
+            capsule: true,
+            child: Material(
+              type: MaterialType.transparency,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                child: LayoutBuilder(builder: (context, bounds) {
+                  if (bounds.maxWidth <= 0) return const SizedBox.shrink();
+                  final cell = bounds.maxWidth / count;
+                  double position(double x) {
+                    final local = rtl ? bounds.maxWidth - x : x;
+                    return (local / cell - .5).clamp(0.0, count - 1.0).toDouble();
+                  }
+                  final index = (_drag ?? widget.selectedIndex.toDouble())
+                      .clamp(0.0, count - 1.0).toDouble();
+                  final active = index.round();
+                  return GestureDetector(
+                    excludeFromSemantics: true,
+                    onHorizontalDragStart: (d) => setState(() {
+                      _drag = position(d.localPosition.dx);
+                      _pressed = null;
+                    }),
+                    onHorizontalDragUpdate: (d) => setState(() {
+                      _drag = position(d.localPosition.dx);
+                    }),
+                    onHorizontalDragCancel: _clearTouch,
+                    onHorizontalDragEnd: (_) {
+                      final target = _drag?.round();
+                      _clearTouch();
+                      if (target != null && target != widget.selectedIndex) {
+                        widget.onDestinationSelected(target);
+                      }
+                    },
+                    child: Stack(fit: StackFit.expand, children: [
+                      _FluidIndicator(index: index, cell: cell, count: count,
+                        dragging: _drag != null, pressed: _pressed == active,
+                        reduced: reduced),
+                      Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        for (int i = 0; i < count; i++)
+                          Expanded(child: _destination(context, i, i == active)),
                       ]),
-                    );
-                  }),
-                ),
+                    ]),
+                  );
+                }),
               ),
             ),
           ),
@@ -185,7 +180,16 @@ class _FluidIndicator extends StatelessWidget {
                 duration: reduced ? Duration.zero : const Duration(milliseconds: 110),
                 scale: pressed && !reduced ? .96 : 1,
                 child: DecoratedBox(decoration: BoxDecoration(
-                  color: (dark ? Colors.white : colors.surface).withValues(alpha: dark ? .15 : .45),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: dark ? .32 : .72),
+                      Colors.white.withValues(alpha: dark ? .08 : .26),
+                      Colors.white.withValues(alpha: dark ? .20 : .50),
+                    ],
+                  ),
+                  border: Border.all(color: Colors.white.withValues(alpha: dark ? .28 : .58), width: .8),
                   borderRadius: const BorderRadius.all(Radius.circular(32)),
                 )),
               ),

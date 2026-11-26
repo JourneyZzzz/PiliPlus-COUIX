@@ -1,6 +1,5 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:PiliPlus/common/style.dart';
+import 'package:PiliPlus/common/widgets/liquid_glass.dart';
 import 'package:PiliPlus/common/widgets/scroll_header_inset.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart' show tabBarView;
@@ -75,7 +74,6 @@ class _HomePageState extends CommonPageState<HomePage>
     ));
     final hasToolbar = !_mainController.useSideBar && MediaQuery.isPortraitOf(context);
     final toolbar = hasToolbar ? customAppBar() : null;
-    final dark = _colorScheme.brightness == Brightness.dark;
 
     Widget layout(double toolbarHeight) {
       final height = toolbarHeight + (_homeController.tabs.length > 1 ? 46 : 6);
@@ -87,35 +85,20 @@ class _HomePageState extends CommonPageState<HomePage>
             top: 0,
             left: 0,
             right: 0,
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        _colorScheme.surfaceContainerLow.withValues(alpha: dark ? .78 : .72),
-                        _colorScheme.surface.withValues(alpha: dark ? .68 : .60),
-                      ],
+            child: LiquidGlass(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (toolbar != null)
+                    ClipRect(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        heightFactor: toolbarHeight / Style.topBarHeight,
+                        child: toolbar,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (toolbar != null)
-                        ClipRect(
-                          child: Align(
-                            alignment: Alignment.bottomCenter,
-                            heightFactor: toolbarHeight / Style.topBarHeight,
-                            child: toolbar,
-                          ),
-                        ),
-                      tabBar,
-                    ],
-                  ),
-                ),
+                  tabBar,
+                ],
               ),
             ),
           ),
@@ -146,11 +129,11 @@ class _HomePageState extends CommonPageState<HomePage>
       children: [
         searchBar(),
         const SizedBox(width: 6),
-        msgBadge(_mainController, toolbarColor: _colorScheme.surface.withValues(alpha: .68)),
+        msgBadge(_mainController, toolbarColor: _colorScheme.surfaceContainerHigh.withValues(alpha: .54)),
         Obx(() => IconButton(
           tooltip: '我的',
           onPressed: _mainController.toMinePage,
-          style: _toolbarStyle(_colorScheme.surface.withValues(alpha: .68)),
+          style: _toolbarStyle(_colorScheme.surfaceContainerHigh.withValues(alpha: .54)),
           icon: Icon(_mainController.accountService.isLogin.value && MineController.anonymity.value
               ? MdiIcons.incognito
               : Icons.person_outline_rounded),
@@ -171,7 +154,7 @@ class _HomePageState extends CommonPageState<HomePage>
         height: 44,
         child: Material(
           borderRadius: borderRadius,
-          color: _colorScheme.surface.withValues(alpha: .68),
+          color: _colorScheme.surfaceContainerHigh.withValues(alpha: .54),
           child: InkWell(
             borderRadius: borderRadius,
             splashColor: _colorScheme.primaryContainer.withValues(
