@@ -3,7 +3,11 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['.github/workflows/couix-android.yml']
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'pubspec.*'
+      - '.github/workflows/couix-android.yml'
 
 permissions:
   contents: read

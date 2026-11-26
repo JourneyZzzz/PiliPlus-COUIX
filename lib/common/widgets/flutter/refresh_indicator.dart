@@ -7,6 +7,7 @@
 import 'dart:async' show Completer;
 
 import 'package:PiliPlus/common/widgets/refresh_layout.dart';
+import 'package:PiliPlus/common/widgets/scroll_header_inset.dart';
 import 'package:PiliPlus/common/widgets/scroll_behavior.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart'
     show BouncingScrollPhysicsExt;
@@ -526,12 +527,15 @@ class RefreshIndicatorState extends State<RefreshIndicator>
           ? null
           : AnimatedBuilder(
               animation: _positionController,
-              builder: (context, child) => RefreshProgressIndicator(
-                value: showIndeterminateIndicator ? null : _value.value,
-                valueColor: _valueColor,
-                backgroundColor: widget.backgroundColor,
-                strokeWidth: widget.strokeWidth,
-                elevation: widget.elevation,
+              builder: (context, child) => Transform.translate(
+                offset: Offset(0, ScrollHeaderInset.of(context)),
+                child: RefreshProgressIndicator(
+                  value: showIndeterminateIndicator ? null : _value.value,
+                  valueColor: _valueColor,
+                  backgroundColor: widget.backgroundColor,
+                  strokeWidth: widget.strokeWidth,
+                  elevation: widget.elevation,
+                ),
               ),
             ),
     );

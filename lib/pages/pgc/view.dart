@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/scroll_header_inset.dart';
 import 'dart:math';
 
 import 'package:PiliPlus/common/style.dart';
@@ -62,6 +63,7 @@ class _PgcPageState extends State<PgcPage> with AutomaticKeepAliveClientMixin {
         controller: controller.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: ScrollHeaderInset.of(context))),
           _buildFollow(theme),
           if (controller.showPgcTimeline)
             SliverToBoxAdapter(

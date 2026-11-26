@@ -1,5 +1,7 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:PiliPlus/common/style.dart';
-import 'package:PiliPlus/common/widgets/custom_height_widget.dart';
+import 'package:PiliPlus/common/widgets/scroll_header_inset.dart';
 import 'package:PiliPlus/common/widgets/image/network_img_layer.dart';
 import 'package:PiliPlus/common/widgets/scroll_physics.dart' show tabBarView;
 import 'package:PiliPlus/pages/common/common_page.dart';
@@ -64,31 +66,78 @@ class _HomePageState extends CommonPageState<HomePage>
           ),
         ),
       );
-      if (_homeController.hideTopBar &&
-          _mainController.barHideType == .instant) {
-        tabBar = Material(
-          color: _colorScheme.surface,
-          child: tabBar,
-        );
-      }
     } else {
       tabBar = const SizedBox(height: 6);
     }
-    return Column(
-      children: [
-        if (!_mainController.useSideBar && MediaQuery.isPortraitOf(context))
-          customAppBar(),
-        tabBar,
-        Expanded(
-          child: onBuild(
-            tabBarView(
-              controller: _homeController.tabController,
-              children: _homeController.tabs.map((e) => e.page).toList(),
+    final body = onBuild(tabBarView(
+      controller: _homeController.tabController,
+      children: _homeController.tabs.map((e) => e.page).toList(),
+    ));
+    final hasToolbar = !_mainController.useSideBar && MediaQuery.isPortraitOf(context);
+    final toolbar = hasToolbar ? customAppBar() : null;
+    final dark = _colorScheme.brightness == Brightness.dark;
+
+    Widget layout(double toolbarHeight) {
+      final height = toolbarHeight + (_homeController.tabs.length > 1 ? 46 : 6);
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          ScrollHeaderInset(height: height, child: body),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        _colorScheme.surfaceContainerLow.withValues(alpha: dark ? .78 : .72),
+                        _colorScheme.surface.withValues(alpha: dark ? .68 : .60),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (toolbar != null)
+                        ClipRect(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            heightFactor: toolbarHeight / Style.topBarHeight,
+                            child: toolbar,
+                          ),
+                        ),
+                      tabBar,
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    }
+
+    if (!hasToolbar) return layout(0);
+    if (_homeController.hideTopBar) {
+      if (_mainController.barOffset case final offset?) {
+        return Obx(() => layout(Style.topBarHeight - offset.value));
+      }
+      if (_homeController.showTopBar case final visible?) {
+        return Obx(() => TweenAnimationBuilder<double>(
+          tween: Tween(end: visible.value ? Style.topBarHeight : 0.0),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOutCubicEmphasized,
+          builder: (context, height, _) => layout(height),
+        ));
+      }
+    }
+    return layout(Style.topBarHeight);
   }
 
   Widget customAppBar() {
@@ -97,50 +146,17 @@ class _HomePageState extends CommonPageState<HomePage>
       children: [
         searchBar(),
         const SizedBox(width: 6),
-        msgBadge(_mainController, toolbarColor: _colorScheme.surfaceContainerLow),
+        msgBadge(_mainController, toolbarColor: _colorScheme.surface.withValues(alpha: .68)),
         Obx(() => IconButton(
           tooltip: '我的',
           onPressed: _mainController.toMinePage,
-          style: _toolbarStyle(_colorScheme.surfaceContainerLow),
+          style: _toolbarStyle(_colorScheme.surface.withValues(alpha: .68)),
           icon: Icon(_mainController.accountService.isLogin.value && MineController.anonymity.value
               ? MdiIcons.incognito
               : Icons.person_outline_rounded),
         )),
       ],
     );
-    if (_homeController.hideTopBar) {
-      if (_mainController.barOffset case final barOffset?) {
-        return Obx(
-          () {
-            final offset = barOffset.value;
-            return CustomHeightWidget(
-              offset: Offset(0, -offset),
-              height: Style.topBarHeight - offset,
-              child: Padding(
-                padding: padding,
-                child: child,
-              ),
-            );
-          },
-        );
-      }
-      if (_homeController.showTopBar case final showTopBar?) {
-        return Obx(() {
-          final showSearchBar = showTopBar.value;
-          return AnimatedOpacity(
-            opacity: showSearchBar ? 1 : 0,
-            duration: const Duration(milliseconds: 300),
-            child: AnimatedContainer(
-              curve: Curves.easeInOutCubicEmphasized,
-              duration: const Duration(milliseconds: 500),
-              height: showSearchBar ? Style.topBarHeight : 0,
-              padding: padding,
-              child: child,
-            ),
-          );
-        });
-      }
-    }
     return Container(
       height: Style.topBarHeight,
       padding: padding,
@@ -155,7 +171,7 @@ class _HomePageState extends CommonPageState<HomePage>
         height: 44,
         child: Material(
           borderRadius: borderRadius,
-          color: _colorScheme.surfaceContainerHigh,
+          color: _colorScheme.surface.withValues(alpha: .68),
           child: InkWell(
             borderRadius: borderRadius,
             splashColor: _colorScheme.primaryContainer.withValues(

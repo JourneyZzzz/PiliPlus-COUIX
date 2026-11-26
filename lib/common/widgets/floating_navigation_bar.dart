@@ -62,15 +62,15 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar> {
           height: 60,
           decoration: BoxDecoration(borderRadius: radius, boxShadow: [
             BoxShadow(color: Colors.black.withValues(alpha: dark ? .28 : .12),
-              blurRadius: 18, offset: const Offset(0, 5)),
+              blurRadius: 14, spreadRadius: -3, offset: const Offset(0, 3)),
           ]),
           child: ClipRRect(
             borderRadius: radius,
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 13, sigmaY: 13),
+              filter: ImageFilter.blur(sigmaX: 17, sigmaY: 17),
               child: Material(
                 color: (dark ? scheme.surfaceContainer : scheme.surface)
-                    .withValues(alpha: dark ? .91 : .87),
+                    .withValues(alpha: dark ? .62 : .56),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   child: LayoutBuilder(builder: (context, bounds) {
@@ -185,7 +185,7 @@ class _FluidIndicator extends StatelessWidget {
                 duration: reduced ? Duration.zero : const Duration(milliseconds: 110),
                 scale: pressed && !reduced ? .96 : 1,
                 child: DecoratedBox(decoration: BoxDecoration(
-                  color: Color.alphaBlend(colors.onSurface.withValues(alpha: dark ? .12 : .07), colors.surface),
+                  color: (dark ? Colors.white : colors.surface).withValues(alpha: dark ? .15 : .45),
                   borderRadius: const BorderRadius.all(Radius.circular(32)),
                 )),
               ),

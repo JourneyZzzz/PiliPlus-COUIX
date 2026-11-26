@@ -57,7 +57,7 @@ class RenderLiveSliverPinnedHeader extends RenderSliverPinnedHeader {
     final double childExtent = child!.size.height;
     final offset = childExtent - _areaHeight;
     geometry = geometry!.copyWith(
-      paintOrigin: -math.min(constraints.scrollOffset, offset),
+      paintOrigin: constraints.overlap - math.min(constraints.scrollOffset, offset),
     );
     callback(offset);
   }

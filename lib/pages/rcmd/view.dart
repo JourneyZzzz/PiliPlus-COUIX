@@ -1,3 +1,4 @@
+import 'package:PiliPlus/common/widgets/scroll_header_inset.dart';
 import 'package:PiliPlus/common/skeleton/video_card_v.dart';
 import 'package:PiliPlus/common/sliver_single_child_delegate.dart';
 import 'package:PiliPlus/common/style.dart';
@@ -43,6 +44,7 @@ class _RcmdPageState extends State<RcmdPage>
           controller: controller.scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: ScrollHeaderInset.of(context))),
             SliverPadding(
               padding: const .only(top: Style.cardSpace, bottom: 100),
               sliver: Obx(
