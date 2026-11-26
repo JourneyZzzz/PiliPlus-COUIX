@@ -1,0 +1,96 @@
+name: Validate the COUIX APK on Android
+on:
+  push:
+    branches: [couix-device-check]
+    paths: ['.github/workflows/couix-device-check.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: PiliPlus-COUIX-arm64-v8a.apk
+          run-id: 45851034939
+          github-token: ${{ github.token }}
+      - name: Prepare capture script
+        run: |
+          cat > capture.py <<'PYTHON'
+          from pathlib import Path
+          from subprocess import run,Popen,PIPE
+          import re,time,xml.etree.ElementTree as ET
+          out=Path('captures')
+          out.mkdir(exist_ok=True)
+          pkg='com.piliplus.couix'
+          def adb(*args,**opts):
+              return run(['adb',*args],check=True,**opts)
+          def tree():
+              for _ in range(8):
+                  adb('shell','uiautomator','dump','/sdcard/couix.xml',stdout=PIPE)
+                  raw=adb('exec-out','cat','/sdcard/couix.xml',stdout=PIPE).stdout
+                  try: return ET.fromstring(raw)
+                  except ET.ParseError: time.sleep(1)
+              raise RuntimeError('No accessibility tree')
+          def button(label, check=False):
+              root=tree()
+              choices=[]
+              for e in root.iter('node'):
+                  if e.get('package') != pkg: continue
+                  labels=(e.get('content-desc','')+'\n'+e.get('text','')).splitlines()
+                  if label not in labels: continue
+                  x,y,r,b=map(int,re.findall(r'\d+',e.get('bounds','')))
+                  choices.append((b,(x+r)//2,(y+b)//2,e))
+              if not choices:
+                  (out/'screen.xml').write_bytes(ET.tostring(root,encoding='utf-8'))
+                  raise RuntimeError('Tab unavailable: '+label)
+              _,x,y,e=max(choices,key=lambda k:k[0])
+              if check:
+                  assert e.get('selected')=='true' or any(n.get('selected')=='true' for n in e.iter()), label
+              return str(x),str(y)
+          def capture(name):
+              (out/(name+'.png')).write_bytes(adb('exec-out','screencap','-p',stdout=PIPE).stdout)
+          def tap(label):
+              adb('shell','input','tap',*positions[label])
+              time.sleep(1)
+          adb('shell','wm','size','1080x2400')
+          adb('shell','wm','density','420')
+          adb('shell','cmd','uimode','night','no')
+          adb('install','-r','-g','PiliPlus-COUIX-arm64-v8a.apk')
+          adb('shell','am','start','-W','-n',pkg+'/com.example.piliplus.MainActivity')
+          time.sleep(9)
+          capture('launch')
+          positions={label:button(label) for label in ('首页','动态','我的')}
+          for label,name in [('首页','home'),('动态','dynamics'),('我的','mine')]:
+              tap(label); button(label,check=True); capture(name)
+          adb('shell','cmd','uimode','night','yes')
+          time.sleep(3); button('我的',check=True); capture('mine-dark')
+          tap('首页')
+          rec=Popen(['adb','shell','screenrecord','--size','720x1600','--time-limit','8','/sdcard/couix-motion.mp4'])
+          time.sleep(1)
+          for label in ['动态','我的','首页','动态']:tap(label)
+          if rec.wait(timeout=20): raise RuntimeError('screenrecord failed')
+          adb('pull','/sdcard/couix-motion.mp4',str(out/'couix-motion.mp4'))
+
+          PYTHON
+          test -s PiliPlus-COUIX-arm64-v8a.apk
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: python3 capture.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: COUIX-device-check
+          path: captures/
+          if-no-files-found: ignore
