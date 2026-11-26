@@ -14,7 +14,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: PiliPlus-COUIX-arm64-v8a.apk
-          run-id: 45851034939
+          run-id: 45854948684
           github-token: ${{ github.token }}
       - name: Prepare capture script
         run: |
@@ -63,14 +63,27 @@ jobs:
           time.sleep(9)
           capture('launch')
           positions={label:button(label) for label in ('首页','动态','我的')}
-          for label,name in [('首页','home'),('动态','dynamics'),('我的','mine')]:
-              tap(label); button(label,check=True); capture(name)
+          capture('home-before')
+          def swipe(y1,y2,ms):
+              adb('shell','input','swipe','525',str(y1),'525',str(y2),str(ms))
+              time.sleep(1)
+          def scroll_pair():
+              swipe(1790,720,480)
+              swipe(880,1110,360)
+          scroll_pair()
+          capture('home-scroll-light')
+          scroll_pair()
+          capture('home-scroll-light-2')
           adb('shell','cmd','uimode','night','yes')
-          time.sleep(3); button('我的',check=True); capture('mine-dark')
-          tap('首页')
-          rec=Popen(['adb','shell','screenrecord','--size','720x1600','--time-limit','8','/sdcard/couix-motion.mp4'])
+          time.sleep(3)
+          scroll_pair()
+          capture('home-scroll-dark')
+          rec=Popen(['adb','shell','screenrecord','--size','720x1600','--time-limit','12','/sdcard/couix-motion.mp4'])
           time.sleep(1)
-          for label in ['动态','我的','首页','动态']:tap(label)
+          scroll_pair()
+          for label in ['动态','我的','首页']:
+              tap(label)
+              button(label,check=True)
           if rec.wait(timeout=20): raise RuntimeError('screenrecord failed')
           adb('pull','/sdcard/couix-motion.mp4',str(out/'couix-motion.mp4'))
 
