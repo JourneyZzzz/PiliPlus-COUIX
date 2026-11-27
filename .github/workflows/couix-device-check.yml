@@ -31,8 +31,12 @@ jobs:
               for _ in range(8):
                   adb('shell','uiautomator','dump','/sdcard/couix.xml',stdout=PIPE)
                   raw=adb('exec-out','cat','/sdcard/couix.xml',stdout=PIPE).stdout
-                  try: return ET.fromstring(raw)
-                  except ET.ParseError: time.sleep(1)
+                  try:
+                      root=ET.fromstring(raw)
+                      if any(e.get('content-desc') or e.get('text') for e in root.iter('node')):
+                          return root
+                  except ET.ParseError: pass
+                  time.sleep(1)
               raise RuntimeError('No accessibility tree')
           def button(label, check=False):
               root=tree()
@@ -60,7 +64,11 @@ jobs:
           adb('shell','cmd','uimode','night','no')
           adb('install','-r','-g','PiliPlus-COUIX-arm64-v8a.apk')
           adb('shell','am','start','-W','-n',pkg+'/com.example.piliplus.MainActivity')
-          time.sleep(9)
+          time.sleep(10)
+          for _ in range(12):
+              capture('launch')
+              if (out/'launch.png').stat().st_size > 700000: break
+              time.sleep(2)
           capture('launch')
           positions={label:button(label) for label in ('首页','动态','我的')}
           capture('home-before')
