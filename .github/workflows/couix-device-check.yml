@@ -33,7 +33,14 @@ jobs:
                   raw=adb('exec-out','cat','/sdcard/couix.xml',stdout=PIPE).stdout
                   try:
                       root=ET.fromstring(raw)
-                      if any(e.get('content-desc') or e.get('text') for e in root.iter('node')):
+                      if any('Pixel Launcher' in e.get('text','') for e in root.iter('node')):
+                          close=next((e for e in root.iter('node') if e.get('text')=='Close app'),None)
+                          if close is not None:
+                              x,y,r,b=map(int,re.findall(r'\d+',close.get('bounds')))
+                              adb('shell','input','tap',str((x+r)//2),str((y+b)//2))
+                              time.sleep(2)
+                              continue
+                      if any(e.get('package')==pkg and (e.get('content-desc') or e.get('text')) for e in root.iter('node')):
                           return root
                   except ET.ParseError: pass
                   time.sleep(1)
@@ -71,6 +78,7 @@ jobs:
               time.sleep(2)
           capture('launch')
           positions={label:button(label) for label in ('首页','动态','我的')}
+          capture('launch')
           capture('home-before')
           def swipe(y1,y2,ms):
               adb('shell','input','swipe','525',str(y1),'525',str(y2),str(ms))
@@ -110,6 +118,8 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@v2
         with:
+          ram-size: 3072M
+          cores: 4
           api-level: 35
           target: google_apis
           arch: x86_64
